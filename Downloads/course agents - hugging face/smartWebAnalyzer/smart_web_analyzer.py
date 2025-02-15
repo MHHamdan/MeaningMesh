@@ -15,7 +15,9 @@ from typing import Dict, Any, List, Optional
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-class WebAnalyzer:
+
+class SmartWebAnalyzer:
+    """Smart Web Analyzer Plus: Advanced content analysis with AI capabilities."""
     def __init__(self):
         """Initialize analyzers and download required NLTK data."""
         # Download required NLTK data

@@ -1,5 +1,5 @@
 import gradio as gr
-from analyzer import WebAnalyzer
+from smartWebAnalyzer.smart_web_analyzer import WebAnalyzer
 
 def analyze_content(url: str, mode: str) -> str:
     """Process content and return formatted results."""
@@ -30,8 +30,15 @@ def analyze_content(url: str, mode: str) -> str:
         return f"Error: {str(e)}"
 
 # Create interface
-with gr.Blocks(title="Web Content Analyzer") as demo:
-    gr.Markdown("# Web Content Analyzer")
+with gr.Blocks(title="Smart Web Analyzer Plus") as demo:
+    gr.Markdown("# 🚀 Smart Web Analyzer Plus")
+    gr.Markdown("""
+    Advanced content analysis with AI-powered insights:
+    * 📊 Comprehensive Analysis
+    * 😊 Detailed Sentiment Analysis
+    * 📝 Smart Summarization
+    * 🎯 Topic Detection
+    """)
     with gr.Row():
         url_input = gr.Textbox(
             label="URL or Text",
