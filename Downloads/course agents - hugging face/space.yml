@@ -1,6 +1,5 @@
-# space.yml
 sdk: gradio
-app_file: smartwebanalyzerplus.py
+app_file: smartWebAnalyzerPlusUI.py
 python:
   install:
     - pip install -r requirements_plus.txt
