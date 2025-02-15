@@ -1,238 +1,83 @@
 import gradio as gr
 from analyzer import WebAnalyzer
-import plotly.graph_objects as go
-import plotly.express as px
-from datetime import datetime
-import tempfile
-from fpdf import FPDF
-import os
+import json
 
-class WebAnalyzerUI:
+class WebAnalyzerApp:
     def __init__(self):
         self.analyzer = WebAnalyzer()
-        self.cache = {}
+        self.cached_results = {}
 
-    def format_analysis_results(self, results, theme):
-        """Convert JSON results to visual HTML output"""
-        if isinstance(results, str):
-            results = json.loads(results)
-            
-        dark_mode = "background-color: #1a1a1a; color: #ffffff;" if theme == "dark" else ""
-        
-        html = f"""
-        <div style="{dark_mode} padding: 20px; border-radius: 10px;">
-            <h2 style="color: {'#fff' if theme == 'dark' else '#000'};">Analysis Results</h2>
-        """
-        
-        if results.get("stats"):
-            html += f"""
-            <div style="margin: 20px 0;">
-                <h3>📊 Content Statistics</h3>
-                <p>Words: {results['stats']['words']}</p>
-                <p>Characters: {results['stats']['characters']}</p>
-                <p>Reading Time: {results['stats']['reading_time']}</p>
-            </div>
-            """
-            
-        if results.get("sentiment_analysis"):
-            sentiment_data = results["sentiment_analysis"]
-            fig = go.Figure()
-            sections = []
-            scores = []
-            
-            for section in sentiment_data.get("sections", []):
-                sections.append(f"Section {section['section']}")
-                scores.append(section['score'])
-                
-            fig.add_trace(go.Bar(
-                x=sections,
-                y=scores,
-                marker_color='rgb(55, 83, 109)',
-                text=scores,
-                textposition='auto',
-            ))
-            
-            fig.update_layout(
-                title='Sentiment Analysis by Section',
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                font_color='#fff' if theme == "dark" else '#000'
-            )
-            
-            html += f"""
-            <div style="margin: 20px 0;">
-                <h3>😊 Sentiment Analysis</h3>
-                {fig.to_html(full_html=False)}
-            </div>
-            """
-            
-        if results.get("summary"):
-            html += f"""
-            <div style="margin: 20px 0;">
-                <h3>📝 Summary</h3>
-                <p>{results['summary']}</p>
-            </div>
-            """
-            
-        html += "</div>"
-        return html
+    def process_content(self, text: str, mode: str) -> tuple:
+        """Process content and return formatted results."""
+        try:
+            # Check cache
+            cache_key = f"{text}_{mode}"
+            if cache_key in self.cached_results:
+                return (
+                    self.cached_results[cache_key],  # Results
+                    "Using cached results"  # Status
+                )
 
-    def generate_pdf_report(self, results):
-        """Generate PDF report from analysis results"""
-        pdf = FPDF()
-        pdf.add_page()
-        
-        # Header
-        pdf.set_font('Arial', 'B', 16)
-        pdf.cell(0, 10, 'Web Content Analysis Report', 0, 1, 'C')
-        pdf.line(10, 30, 200, 30)
-        
-        # Date
-        pdf.set_font('Arial', '', 10)
-        pdf.cell(0, 10, f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', 0, 1)
-        
-        if isinstance(results, str):
-            results = json.loads(results)
-        
-        # Content
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 10, 'Statistics:', 0, 1)
-        pdf.set_font('Arial', '', 10)
-        
-        if results.get("stats"):
-            for key, value in results["stats"].items():
-                pdf.cell(0, 10, f'{key.replace("_", " ").title()}: {value}', 0, 1)
-        
-        if results.get("summary"):
-            pdf.set_font('Arial', 'B', 12)
-            pdf.cell(0, 10, 'Summary:', 0, 1)
-            pdf.set_font('Arial', '', 10)
-            pdf.multi_cell(0, 10, results["summary"])
-        
-        temp_dir = tempfile.gettempdir()
-        pdf_path = os.path.join(temp_dir, 'analysis_report.pdf')
-        pdf.output(pdf_path)
-        
-        return pdf_path
+            # Process new request
+            results = self.analyzer.analyze(text, mode)
+            
+            # Cache results
+            self.cached_results[cache_key] = results
+            
+            return results, "Analysis complete!"
+            
+        except Exception as e:
+            return None, f"Error: {str(e)}"
 
     def create_interface(self):
-        with gr.Blocks(theme=gr.themes.Default()) as interface:
-            gr.Markdown("# 🚀 Smart Web Analyzer Plus")
+        with gr.Blocks(title="Smart Web Analyzer") as iface:
+            gr.Markdown("# 🌐 Smart Web Analyzer")
             
             with gr.Row():
-                theme = gr.Radio(
-                    choices=["light", "dark"],
-                    value="light",
-                    label="Theme",
-                    interactive=True
-                )
-            
-            with gr.Tabs():
-                with gr.Tab("Analysis"):
-                    with gr.Row():
-                        with gr.Column():
-                            url_input = gr.Textbox(
-                                label="URL or Text to Analyze",
-                                placeholder="Enter URL or paste text",
-                                lines=5
-                            )
-                            mode = gr.Radio(
-                                choices=["analyze", "sentiment", "summarize", "topics"],
-                                value="analyze",
-                                label="Analysis Mode"
-                            )
-                            with gr.Row():
-                                analyze_btn = gr.Button("🔍 Analyze", variant="primary")
-                                clear_btn = gr.Button("🗑️ Clear")
-
-                        with gr.Column():
-                            results = gr.HTML(label="Analysis Results")
-                            progress = gr.Textbox(label="Status", value="Ready")
-
-                with gr.Tab("Preview"):
-                    preview = gr.Textbox(
-                        label="Content Preview",
-                        lines=10,
-                        interactive=False
+                with gr.Column():
+                    input_text = gr.Textbox(
+                        label="URL or Text to Analyze",
+                        placeholder="Enter URL or paste text",
+                        lines=5
                     )
-
-                with gr.Tab("Report"):
-                    report_btn = gr.Button("📥 Generate PDF Report")
-                    pdf_output = gr.File(label="Download Report")
+                    mode = gr.Radio(
+                        choices=["analyze", "summarize", "sentiment", "topics"],
+                        value="analyze",
+                        label="Analysis Mode"
+                    )
+                    analyze_btn = gr.Button("Analyze")
+                
+                with gr.Column():
+                    results = gr.JSON(label="Results")
+                    status = gr.Textbox(label="Status", value="Ready")
 
             # Examples
+            examples = [
+                ["https://www.artificialintelligence-news.com/2024/02/14/openai-anthropic-google-white-house-red-teaming/", "analyze"],
+                ["https://www.artificialintelligence-news.com/2024/02/13/ai-21-labs-wordtune-chatgpt-plugin/", "sentiment"]
+            ]
+            
             gr.Examples(
-                examples=[
-                    ["https://www.artificialintelligence-news.com/2024/02/14/openai-anthropic-google-white-house-red-teaming/", "analyze", "light"],
-                    ["https://www.artificialintelligence-news.com/2024/02/13/ai-21-labs-wordtune-chatgpt-plugin/", "sentiment", "light"]
-                ],
-                inputs=[url_input, mode, theme],
-                outputs=[results, preview, progress],
+                examples=examples,
+                inputs=[input_text, mode],
+                outputs=[results, status],
                 fn=self.process_content,
                 cache_examples=True
             )
 
-            # Handle theme changes
-            theme.change(
-                fn=lambda t: gr.update(theme=gr.themes.Default() if t == "light" else gr.themes.Soft()),
-                inputs=[theme],
-                outputs=[interface]
-            )
-
-            # Wire up buttons
+            # Handle analysis
             analyze_btn.click(
                 fn=self.process_content,
-                inputs=[url_input, mode, theme],
-                outputs=[results, preview, progress]
+                inputs=[input_text, mode],
+                outputs=[results, status]
             )
 
-            clear_btn.click(
-                fn=lambda: (None, "", "Ready"),
-                inputs=[],
-                outputs=[results, preview, progress]
-            )
+        return iface
 
-            report_btn.click(
-                fn=self.generate_pdf_report,
-                inputs=[results],
-                outputs=[pdf_output]
-            )
-
-        return interface
-
-    def process_content(self, text, mode, theme):
-        """Process content with progress updates"""
-        try:
-            # Use cached results if available
-            cache_key = f"{text}_{mode}"
-            if cache_key in self.cache:
-                return (
-                    self.format_analysis_results(self.cache[cache_key], theme),
-                    "Content preview unavailable for cached results",
-                    "Using cached results"
-                )
-
-            # Analyze content
-            results = self.analyzer.analyze(text, mode)
-            results_dict = json.loads(results)
-            
-            # Cache results
-            self.cache[cache_key] = results_dict
-            
-            # Get preview
-            preview = results_dict.get("content", "")[:1000] + "..."
-            
-            return (
-                self.format_analysis_results(results_dict, theme),
-                preview,
-                "Analysis complete!"
-            )
-            
-        except Exception as e:
-            return None, "", f"Error: {str(e)}"
-
-# Create and launch interface
-if __name__ == "__main__":
-    analyzer_ui = WebAnalyzerUI()
-    demo = analyzer_ui.create_interface()
-    demo.launch()
+# Create and launch app
+app = WebAnalyzerApp()
+demo = app.create_interface()
+demo.queue()  # Enable queuing
+demo.launch(server_name="0.0.0.0", 
+           server_port=7860,
+           show_error=True)
