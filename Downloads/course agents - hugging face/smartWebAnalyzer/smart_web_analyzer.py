@@ -16,7 +16,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
-class SmartWebAnalyzer:
+class WebAnalyzer:
     """Smart Web Analyzer Plus: Advanced content analysis with AI capabilities."""
     def __init__(self):
         """Initialize analyzers and download required NLTK data."""
@@ -233,3 +233,5 @@ class SmartWebAnalyzer:
                 "status": "error",
                 "message": f"Analysis failed: {str(e)}"
             })
+            
+            

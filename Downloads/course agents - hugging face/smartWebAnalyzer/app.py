@@ -1,5 +1,7 @@
 import gradio as gr
+import os
 from smartWebAnalyzer.smart_web_analyzer import WebAnalyzer
+from huggingface_hub import upload_file
 
 def analyze_content(url: str, mode: str) -> str:
     """Process content and return formatted results."""
@@ -59,4 +61,23 @@ with gr.Blocks(title="Smart Web Analyzer Plus") as demo:
         outputs=output
     )
 
+
+# When pushing the tool
+WebAnalyzer.push_to_hub(
+    "MHamdan/smart-web-analyzer-plus",  # New repo name
+    token=os.environ["HF_Repo_API"],
+    private=False
+)
+
+# When uploading files
+for filename in ["app.py", "requirements.txt"]:
+    upload_file(
+        path_or_fileobj=filename,
+        path_in_repo=filename,
+        repo_id="MHamdan/smart-web-analyzer-plus",  # New repo name
+        repo_type="space",
+        token=os.environ["HF_Repo_API"]
+    )
+ 
+#web_analyzer = load_tool("MHamdan/smart-web-analyzer-plus", trust_remote_code=True)   
 demo.launch()

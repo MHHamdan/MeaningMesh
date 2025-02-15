@@ -1,3 +1,7 @@
 sdk: gradio
 app_file: app.py
+title: Smart Web Analyzer Plus
+emoji: 🚀
+colorFrom: blue
+colorTo: indigo
 python_version: "3.10"
