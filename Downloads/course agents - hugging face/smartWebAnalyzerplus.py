@@ -97,14 +97,73 @@ def analyze_content(input_data: str, mode: str, is_url: bool, summary_length: in
         return {"raw_text": text, "analysis": results, "status": "success"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
-
 def create_interface():
-    with gr.Blocks(title="Smart Web Analyzer Plus") as demo:
-        gr.Markdown("# Smart Web Analyzer Plus")
+    with gr.Blocks(title="Smart Web Analyzer Plus") as iface:
+        gr.Markdown("# 🚀 Smart Web Analyzer Plus")
+        gr.Markdown("""
+        Advanced content analysis with AI-powered insights:
+        * 📊 Comprehensive Analysis
+        * 😊 Detailed Sentiment Analysis
+        * 📝 Smart Summarization
+        * 🎯 Topic Detection
+        """)
+
+        # Theme toggle
+        theme = gr.Radio(choices=["light", "dark"], value="light", label="Theme", interactive=True)
+
         with gr.Tabs():
-            create_analysis_tab()
-            create_report_tab()
-    return demo
+            with gr.Tab("Analysis"):
+                with gr.Row():
+                    with gr.Column():
+                        input_text = gr.Textbox(
+                            label="URL or Text to Analyze",
+                            placeholder="Enter URL or paste text",
+                            lines=5
+                        )
+                        mode = gr.Radio(
+                            choices=["analyze", "summarize", "sentiment", "topics"],
+                            value="analyze",
+                            label="Analysis Mode"
+                        )
+                        analyze_btn = gr.Button("🔍 Analyze", variant="primary")
+                        status = gr.Markdown("Status: Ready")
+
+                    with gr.Column():
+                        results = gr.JSON(label="Analysis Results")
+                        chart = gr.Plot(label="Visualization", visible=False)
+
+                # Ensure correct UI state handling
+                mode.change(
+                    lambda m: gr.update(visible=(m == "sentiment")),
+                    inputs=[mode],
+                    outputs=[chart]
+                )
+
+            with gr.Tab("Preview"):
+                preview = gr.Textbox(label="Content Preview", lines=10, interactive=False)
+
+            with gr.Tab("Report"):
+                download_btn = gr.Button("📥 Download PDF Report")
+                pdf_output = gr.File(label="Generated Report")
+
+        # Wire up the analysis button
+        analyze_btn.click(
+            fn=process_content,
+            inputs=[input_text, mode, theme],
+            outputs=[results, preview, status, chart]
+        )
+
+        # Wire up PDF download
+        download_btn.click(
+            fn=lambda: generate_pdf_report(json.loads(results.value) if results.value else {}),
+            inputs=[],
+            outputs=[pdf_output]
+        )
+
+    return iface
+
+demo = create_interface()
+demo.launch()
 
 if __name__ == "__main__":
     interface = create_interface()
