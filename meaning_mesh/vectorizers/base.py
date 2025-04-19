@@ -132,3 +132,4 @@ def create_vectorizer(
     
     else:
         raise ValueError(f"Unsupported vectorizer provider: {provider}")
+from ..utils.caching import cache_async, vectorizer_cache

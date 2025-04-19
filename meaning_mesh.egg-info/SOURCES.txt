@@ -15,6 +15,7 @@ meaning_mesh/storage/__init__.py
 meaning_mesh/storage/base.py
 meaning_mesh/storage/memory.py
 meaning_mesh/utils/__init__.py
+meaning_mesh/utils/caching.py
 meaning_mesh/utils/similarity.py
 meaning_mesh/vectorizers/__init__.py
 meaning_mesh/vectorizers/base.py
@@ -22,3 +23,4 @@ meaning_mesh/vectorizers/cohere.py
 meaning_mesh/vectorizers/huggingface.py
 meaning_mesh/vectorizers/mock.py
 meaning_mesh/vectorizers/openai.py
+tests/test_dispatcher.py
