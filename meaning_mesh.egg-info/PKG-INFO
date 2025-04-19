@@ -1,0 +1,27 @@
+Metadata-Version: 2.4
+Name: meaning_mesh
+Version: 0.1.0
+Summary: A semantic text dispatching framework
+Author: Mohammed Hamdan
+Requires-Python: >=3.9
+License-File: LICENSE
+Requires-Dist: numpy>=1.20.0
+Provides-Extra: openai
+Requires-Dist: openai>=1.0.0; extra == "openai"
+Provides-Extra: huggingface
+Requires-Dist: sentence-transformers>=2.0.0; extra == "huggingface"
+Provides-Extra: cohere
+Requires-Dist: cohere>=4.0.0; extra == "cohere"
+Provides-Extra: all
+Requires-Dist: openai>=1.0.0; extra == "all"
+Requires-Dist: sentence-transformers>=2.0.0; extra == "all"
+Requires-Dist: cohere>=4.0.0; extra == "all"
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0.0; extra == "dev"
+Requires-Dist: black>=21.5b2; extra == "dev"
+Dynamic: author
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

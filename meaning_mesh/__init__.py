@@ -20,25 +20,8 @@ from .utils.similarity import (
     SIMILARITY_FUNCTIONS
 )
 
-# Import vectorizer implementations
-try:
-    from .vectorizers.openai import OpenAIVectorizer
-except ImportError:
-    pass
-
-try:
-    from .vectorizers.huggingface import HuggingFaceVectorizer
-except ImportError:
-    pass
-
-try:
-    from .vectorizers.cohere import CohereVectorizer
-except ImportError:
-    pass
-
-try:
-    from .vectorizers.mock import MockVectorizer
-except ImportError:
-    pass
+# We don't import the vectorizer implementations directly here
+# since they're already handled in the vectorizers/__init__.py file
+# and will be accessible through that namespace
 
 __version__ = "0.1.0"

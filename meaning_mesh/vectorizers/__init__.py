@@ -6,21 +6,35 @@ with MeaningMesh for semantic text routing.
 """
 
 from .base import Vectorizer, create_vectorizer
-from .openai import OpenAIVectorizer
-from .huggingface import HuggingFaceVectorizer
 from .mock import MockVectorizer
 
-# Import optional providers that might not be installed
-try:
-    from .cohere import CohereVectorizer
-except ImportError:
-    pass
-
+# Define the list of exported symbols
 __all__ = [
     "Vectorizer",
     "create_vectorizer",
-    "OpenAIVectorizer",
-    "HuggingFaceVectorizer",
     "MockVectorizer",
-    "CohereVectorizer",  # Will be undefined if import failed, but that's okay for __all__
 ]
+
+# Try to import OpenAI vectorizer
+try:
+    from .openai import OpenAIVectorizer
+    __all__.append("OpenAIVectorizer")
+except ImportError:
+    # OpenAI is not installed, which is fine
+    pass
+
+# Try to import HuggingFace vectorizer
+try:
+    from .huggingface import HuggingFaceVectorizer
+    __all__.append("HuggingFaceVectorizer")
+except ImportError:
+    # HuggingFace dependencies are not installed, which is fine
+    pass
+
+# Try to import Cohere vectorizer
+try:
+    from .cohere import CohereVectorizer
+    __all__.append("CohereVectorizer")
+except ImportError:
+    # Cohere is not installed, which is fine
+    pass

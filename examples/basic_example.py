@@ -41,12 +41,12 @@ async def fallback_handler(text: str, context: Dict[str, Any]) -> str:
 async def main():
     print("Initializing MeaningMesh components...")
     
-    # Initialize components
-    # You can use any vectorizer provider:
-    # "openai", "huggingface", "cohere", or "mock"
+    # Initialize components with the mock vectorizer
+    # The mock vectorizer simulates semantic similarity for testing
     vectorizer = create_vectorizer(
-        provider="mock",  # Use mock for demo without API keys
-        dimensions=384    # Mock embedding dimensions
+        provider="mock",       # Options: "openai", "huggingface", "cohere", "mock"
+        dimensions=384,        # Mock embedding dimensions
+        semantic_boost=0.7     # How much to boost semantic matching
     )
     
     store = InMemoryEmbeddingStore()
@@ -94,11 +94,15 @@ async def main():
         handler=fallback_handler
     )
     
+    # For the mock vectorizer, use a lower confidence threshold
+    # Real embedding models typically produce higher similarity scores
+    confidence_threshold = 0.3  # Lower threshold for the mock vectorizer
+    
     # Create dispatcher
     dispatcher = SemanticDispatcher(
         vectorizer=vectorizer,
         store=store,
-        confidence_threshold=0.7,
+        confidence_threshold=confidence_threshold,
         fallback_path=fallback_path
     )
     

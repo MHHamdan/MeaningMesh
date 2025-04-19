@@ -3,6 +3,7 @@
 import random
 import hashlib
 from typing import List, Optional, Dict, Any
+import re
 
 from .base import Vectorizer
 
@@ -11,15 +12,22 @@ class MockVectorizer(Vectorizer):
     """
     Mock vectorizer for testing that produces deterministic embeddings.
     
-    This vectorizer creates fake embeddings based on the hash of the text,
+    This vectorizer creates fake embeddings based on semantic categories,
     making it useful for testing without external dependencies.
     """
+    
+    # Define semantic categories for keyword-based similarity
+    SEMANTIC_CATEGORIES = {
+        "weather": ["weather", "forecast", "rain", "sunny", "temperature", "umbrella", "cold", "hot", "climate"],
+        "greeting": ["hello", "hi", "hey", "morning", "greetings", "howdy", "welcome", "sup"],
+        "support": ["problem", "issue", "help", "support", "order", "package", "return", "account", "missing", "defective"]
+    }
     
     def __init__(
         self, 
         dimensions: int = 384,
         seed: int = 42,
-        deterministic: bool = True
+        semantic_boost: float = 0.7
     ):
         """
         Initialize a MockVectorizer.
@@ -27,12 +35,27 @@ class MockVectorizer(Vectorizer):
         Args:
             dimensions: Number of dimensions for the mock embeddings
             seed: Random seed for reproducibility
-            deterministic: Whether to use deterministic embeddings based on text hash
+            semantic_boost: How much to boost semantic category matches (0-1)
         """
         self.dimensions = dimensions
         self.random = random.Random(seed)
-        self.deterministic = deterministic
+        self.semantic_boost = semantic_boost
         self._embedding_cache: Dict[str, List[float]] = {}
+        
+        # Pre-generate category base vectors
+        self.category_vectors = {}
+        for category in self.SEMANTIC_CATEGORIES:
+            # Create a base vector for each category
+            self.category_vectors[category] = [
+                self.random.uniform(-1.0, 1.0) for _ in range(self.dimensions)
+            ]
+            
+            # Normalize to unit length
+            magnitude = sum(x * x for x in self.category_vectors[category]) ** 0.5
+            if magnitude > 0:
+                self.category_vectors[category] = [
+                    x / magnitude for x in self.category_vectors[category]
+                ]
     
     async def vectorize(self, texts: List[str], **kwargs) -> List[List[float]]:
         """
@@ -62,48 +85,44 @@ class MockVectorizer(Vectorizer):
         if text in self._embedding_cache:
             return self._embedding_cache[text]
         
-        if self.deterministic:
-            # Create a deterministic embedding based on the text hash
-            embedding = self._create_deterministic_embedding(text)
+        # Determine semantic categories in the text
+        text_lower = text.lower()
+        
+        # Calculate category scores based on word presence
+        category_scores = {}
+        for category, keywords in self.SEMANTIC_CATEGORIES.items():
+            # Count matching keywords
+            word_matches = sum(1 for keyword in keywords if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower))
+            if word_matches > 0:
+                category_scores[category] = min(1.0, word_matches / 3)  # Cap at 1.0
+        
+        # Create embedding based on categories
+        if category_scores:
+            # Blend category vectors based on scores
+            total_score = sum(category_scores.values())
+            embedding = [0.0] * self.dimensions
+            
+            # Mix category vectors
+            for category, score in category_scores.items():
+                weight = score / total_score
+                for i in range(self.dimensions):
+                    embedding[i] += self.category_vectors[category][i] * weight
+                    
+            # Add randomness for uniqueness
+            for i in range(self.dimensions):
+                # Add small random noise
+                embedding[i] += (self.random.uniform(-0.1, 0.1) * (1 - self.semantic_boost))
         else:
-            # Create a random embedding
+            # No category match, generate random embedding
             embedding = [self.random.uniform(-1.0, 1.0) for _ in range(self.dimensions)]
-            
-            # Normalize to unit length
-            magnitude = sum(x * x for x in embedding) ** 0.5
-            if magnitude > 0:
-                embedding = [x / magnitude for x in embedding]
-        
-        # Cache the result
-        self._embedding_cache[text] = embedding
-        return embedding
-    
-    def _create_deterministic_embedding(self, text: str) -> List[float]:
-        """
-        Create a deterministic embedding based on text hash.
-        
-        Args:
-            text: Input text
-            
-        Returns:
-            Deterministic embedding vector
-        """
-        # Get a hash of the text
-        hash_obj = hashlib.sha256(text.encode())
-        hash_bytes = hash_obj.digest()
-        
-        # Use the hash to seed a random generator
-        seed = int.from_bytes(hash_bytes[:4], byteorder='big')
-        rand = random.Random(seed)
-        
-        # Generate deterministic vector
-        embedding = [rand.uniform(-1.0, 1.0) for _ in range(self.dimensions)]
         
         # Normalize to unit length
         magnitude = sum(x * x for x in embedding) ** 0.5
         if magnitude > 0:
             embedding = [x / magnitude for x in embedding]
         
+        # Cache the result
+        self._embedding_cache[text] = embedding
         return embedding
     
     @property
@@ -136,5 +155,5 @@ class MockVectorizer(Vectorizer):
         return {
             "provider": self.provider_name,
             "dimensions": self.dimensions,
-            "deterministic": self.deterministic
+            "semantic_boost": self.semantic_boost
         }

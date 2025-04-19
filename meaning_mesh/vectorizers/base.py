@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any, Union
+import importlib.util
 
 
 class Vectorizer(ABC):
@@ -70,9 +71,14 @@ class Vectorizer(ABC):
         return {"provider": self.provider_name}
 
 
+def _is_module_available(module_name: str) -> bool:
+    """Check if a module is available without importing it."""
+    return importlib.util.find_spec(module_name) is not None
+
+
 # Factory function to create vectorizers
 def create_vectorizer(
-    provider: str = "openai",
+    provider: str = "mock",  # Default to mock for easier getting started
     api_key: Optional[str] = None,
     **kwargs
 ) -> Vectorizer:
@@ -89,19 +95,34 @@ def create_vectorizer(
         Vectorizer instance
     
     Raises:
-        ValueError: If the provider is not supported
+        ValueError: If the provider is not supported or its dependencies are not installed
     """
     provider = provider.lower()
     
     if provider == "openai":
+        if not _is_module_available("openai"):
+            raise ValueError(
+                "OpenAI provider requires the 'openai' package. "
+                "Install it with: pip install -e '.[openai]'"
+            )
         from .openai import OpenAIVectorizer
         return OpenAIVectorizer(api_key=api_key, **kwargs)
     
     elif provider == "huggingface":
+        if not _is_module_available("sentence_transformers"):
+            raise ValueError(
+                "HuggingFace provider requires the 'sentence-transformers' package. "
+                "Install it with: pip install -e '.[huggingface]'"
+            )
         from .huggingface import HuggingFaceVectorizer
         return HuggingFaceVectorizer(**kwargs)
     
     elif provider == "cohere":
+        if not _is_module_available("cohere"):
+            raise ValueError(
+                "Cohere provider requires the 'cohere' package. "
+                "Install it with: pip install -e '.[cohere]'"
+            )
         from .cohere import CohereVectorizer
         return CohereVectorizer(api_key=api_key, **kwargs)
     

@@ -1,5 +1,0 @@
-sdk: gradio
-app_file: smartWebAnalyzerPlusUI.py
-python:
-  install:
-    - pip install -r requirements_plus.txt
