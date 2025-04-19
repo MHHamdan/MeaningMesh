@@ -1,119 +1,106 @@
 # MeaningMesh: Semantic Text Dispatching Framework
 
-MeaningMesh is a Python framework for routing text to appropriate handlers based on semantic meaning rather than keywords or regex patterns. It enables developers to create more natural and robust text processing systems by leveraging modern embedding models.
+**MeaningMesh** is a Python framework for routing text to appropriate handlers based on **semantic meaning** rather than keywords or regex patterns. It enables developers to create more natural, robust text-processing systems by leveraging modern embedding models from various providers.
 
-## Overview
+---
 
-Traditional text routing relies on keywords, regex patterns, or exact matches. MeaningMesh takes a different approach, using semantic embeddings to understand the meaning behind text and route it to the most appropriate handler. This creates more natural interactions and better handles edge cases and variations in language.
+## 🚀 Overview
 
-## Key Features
+Traditional text routing often relies on keywords, regex patterns, or exact matches. MeaningMesh takes a different approach by using **semantic embeddings** to understand text meaning, creating more natural interactions and effectively handling linguistic variations and edge cases.
 
-- **Semantic Routing**: Routes text based on meaning, not just keywords
-- **Multiple Embedding Providers**: Supports OpenAI, HuggingFace, and custom vectorizers
-- **Flexible Paths**: Define destinations with example phrases that represent their domain
-- **Confidence Thresholds**: Configure minimum confidence levels for matches
-- **Fallback Handlers**: Define default behavior for low-confidence matches
-- **Context Awareness**: Take conversation history into account for better routing
-- **Hybrid Matching**: Combine semantic and keyword approaches for optimal results
-- **Asynchronous API**: Built with asyncio for efficient processing
-- **Caching**: Performance optimization through caching mechanisms
-- **Type Annotations**: Comprehensive typing throughout the codebase
+---
 
-## Project Structure
+## ✨ Key Features
+
+- **Provider-Agnostic Embedding:** Supports OpenAI, HuggingFace, Cohere, and custom embedding providers.
+- **Pluggable Architecture:** Easily add new embedding providers.
+- **Semantic Routing:** Routes based on meaning, not keywords.
+- **Flexible Paths:** Define handlers with example phrases.
+- **Confidence Thresholds:** Control routing precision.
+- **Fallback Handlers:** Default handling for uncertain matches.
+- **Context Awareness:** Leverages conversation history.
+- **Hybrid Matching:** Combines semantic and keyword-based routing.
+- **Asynchronous API:** Built with `asyncio`.
+- **Type Annotations:** Fully typed codebase.
+
+---
+
+## 📂 Project Structure
 
 ```
 meaning_mesh/
-├── __init__.py                 # Package exports
-├── vectorizers/                # Embedding model interfaces
+├── __init__.py                  # Package exports
+├── vectorizers/                 # Embedding model interfaces
 │   ├── __init__.py
-│   ├── base.py                 # Base vectorizer interface
-│   ├── openai.py               # OpenAI embeddings implementation
-│   └── huggingface.py          # HuggingFace embeddings implementation
-├── paths/                      # Destination definitions
+│   ├── base.py                  # Base vectorizer interface
+│   ├── openai.py                # OpenAI embeddings
+│   ├── huggingface.py           # HuggingFace embeddings
+│   ├── cohere.py                # Cohere embeddings
+│   └── mock.py                  # Mock vectorizer (testing)
+├── paths/                       # Destination definitions
 │   ├── __init__.py
-│   └── path.py                 # Path class definition
-├── dispatchers/                # Routing logic
+│   └── path.py                  # Path class definition
+├── dispatchers/                 # Routing logic
 │   ├── __init__.py
-│   └── semantic_dispatcher.py  # Main dispatcher implementation
-├── storage/                    # Embedding storage and retrieval
+│   └── semantic_dispatcher.py   # Main dispatcher
+├── storage/                     # Embedding storage
 │   ├── __init__.py
-│   ├── base.py                 # Base storage interface
-│   └── memory.py               # In-memory implementation
-└── utils/                      # Helper functions
+│   ├── base.py                  # Base storage interface
+│   └── memory.py                # In-memory storage
+└── utils/                       # Helper functions
     ├── __init__.py
-    └── similarity.py           # Vector similarity functions
+    └── similarity.py            # Similarity computations
 
 examples/
-├── basic_example.py            # Simple dispatcher usage
-├── hybrid_matching.py          # Combining semantic with keywords
-└── context_awareness.py        # Contextual dispatching example
+├── basic_example.py             # Basic usage
+├── embedding_providers.py       # Different embeddings
+├── hybrid_matching.py           # Semantic + keyword routing
+└── context_awareness.py         # Contextual dispatching
 
 tests/
-└── test_dispatcher.py          # Unit tests
+└── test_dispatcher.py           # Unit tests
 ```
 
-## Quick Start
+---
 
-Here's a simple example of using MeaningMesh:
+## ⚡ Quick Start
+
+### Example Usage
 
 ```python
 import asyncio
-from meaning_mesh import (
-    Path,
-    SemanticDispatcher,
-    HuggingFaceVectorizer,
-    InMemoryEmbeddingStore
-)
+from meaning_mesh import Path, SemanticDispatcher, InMemoryEmbeddingStore
+from meaning_mesh.vectorizers import HuggingFaceVectorizer
 
-# Define handlers
 async def weather_handler(text, context):
     return f"Weather service: {text}"
 
 async def greeting_handler(text, context):
     return f"Greeting service: {text}"
 
-# Create paths with example phrases
 weather_path = Path(
     name="Weather",
-    examples=[
-        "What's the weather like today?",
-        "Will it rain tomorrow?",
-        "Is it sunny outside?"
-    ],
+    examples=["What's the weather today?", "Rain tomorrow?"],
     handler=weather_handler
 )
 
 greeting_path = Path(
     name="Greetings",
-    examples=[
-        "Hello there!",
-        "Hi, how are you?",
-        "Good morning"
-    ],
+    examples=["Hello!", "Good morning!"],
     handler=greeting_handler
 )
 
 async def main():
-    # Initialize components
-    vectorizer = HuggingFaceVectorizer()
+    vectorizer = HuggingFaceVectorizer(model_name="sentence-transformers/all-MiniLM-L6-v2")
     store = InMemoryEmbeddingStore()
-    
-    # Create dispatcher
-    dispatcher = SemanticDispatcher(
-        vectorizer=vectorizer,
-        store=store,
-        confidence_threshold=0.7
-    )
-    
-    # Register paths
+
+    dispatcher = SemanticDispatcher(vectorizer, store, confidence_threshold=0.7)
+
     await dispatcher.register_path(weather_path)
     await dispatcher.register_path(greeting_path)
-    
-    # Test dispatch
-    result, response = await dispatcher.dispatch_and_handle(
-        "What's the forecast for tomorrow?"
-    )
-    
+
+    result, response = await dispatcher.dispatch_and_handle("What's tomorrow's forecast?")
+
     print(f"Matched path: {result.path.name}")
     print(f"Confidence: {result.confidence:.4f}")
     print(f"Response: {response}")
@@ -122,78 +109,99 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Installation
+---
+
+## 📦 Installation
+
+Clone the repository:
 
 ```bash
-# Clone the repository
-git clone https://github.com/MHHamdan/LLM_Reasoning.git
-cd LLM_Reasoning/MeaningMesh
+git clone https://github.com/MHHamdan/MeaningMesh.git
+cd MeaningMesh
+```
 
-# Install the package in development mode
-pip install -e .
+Install in development mode:
 
-# With HuggingFace support
+```bash
+pip install -e ".[all]"
+```
+
+Or with specific embedding providers:
+
+```bash
+pip install -e ".[openai]"
 pip install -e ".[huggingface]"
-
-# With development tools
+pip install -e ".[cohere]"
 pip install -e ".[dev]"
 ```
 
-## Use Cases
+---
+
+## 🌟 Use Cases
 
 MeaningMesh is ideal for:
 
-- **Chatbots**: Route user messages to appropriate handlers
-- **Customer Support**: Direct inquiries to specialized agents
-- **Content Classification**: Categorize texts by semantic meaning
-- **Intent Recognition**: Identify user intents in natural language
-- **Command Routing**: Direct textual commands to appropriate services
+- **Chatbots:** Route user messages effectively.
+- **Customer Support:** Specialized inquiry handling.
+- **Content Classification:** Semantic categorization.
+- **Intent Recognition:** Natural language intent detection.
+- **Command Routing:** Direct commands to services.
 
-## Advanced Features
+---
+
+## 🔧 Advanced Features
+
+### Custom Embedding Providers
+
+Extend with your own embeddings:
+
+```python
+from meaning_mesh.vectorizers import Vectorizer
+from typing import List
+
+class CustomVectorizer(Vectorizer):
+    def __init__(self, **kwargs):
+        self.model = YourEmbeddingModel(**kwargs)
+
+    async def vectorize(self, texts: List[str]) -> List[List[float]]:
+        return [await self.vectorize_single(text) for text in texts]
+
+    async def vectorize_single(self, text: str) -> List[float]:
+        return self.model.embed(text)
+```
 
 ### Hybrid Matching
 
-Combine semantic and keyword-based approaches:
+Combine semantic and keyword-based routing:
 
 ```python
 from examples.hybrid_matching import HybridDispatcher
 
-hybrid_dispatcher = HybridDispatcher(
-    semantic_dispatcher=semantic_dispatcher,
-    semantic_weight=0.7  # 70% semantic, 30% keyword
-)
-
-# Add keyword patterns
-hybrid_dispatcher.add_keyword_pattern(
-    weather_path.id, 
-    r'\b(weather|temperature|rain|sunny|forecast)\b', 
-    weight=0.9
-)
+hybrid_dispatcher = HybridDispatcher(semantic_dispatcher, semantic_weight=0.7)
+hybrid_dispatcher.add_keyword_pattern(weather_path.id, r'\b(weather|forecast)\b', weight=0.9)
 ```
 
 ### Context-Aware Dispatching
 
-Maintain conversation context for better dispatching:
+Maintain context:
 
 ```python
 from examples.context_awareness import ContextAwareDispatcher
 
-context_dispatcher = ContextAwareDispatcher(
-    semantic_dispatcher=semantic_dispatcher,
-    context_weight=0.3  # 30% context, 70% semantic
-)
-
-# Dispatch with conversation context
+context_dispatcher = ContextAwareDispatcher(semantic_dispatcher, context_weight=0.3)
 result, response, conversation_id = await context_dispatcher.dispatch_and_handle(
-    "What about tomorrow?",
-    conversation_id="conversation-123"
+    "Tomorrow?", conversation_id="conversation-123"
 )
 ```
 
-## Contributing
+---
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 🤝 Contributing
 
-## License
+Contributions are welcome! Submit a pull request to propose changes.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
